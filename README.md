@@ -67,6 +67,8 @@ flowchart TB
 | [auth/README.md](docs/core-plugin/auth/README.md) | 認證機制設計 — 身份驗證、Token 管理 |
 | [permissions.md](docs/core-plugin/permissions/permissions.md) | 權限機制設計 — 分層權限、細粒度資源控制 |
 | [data.md](docs/core-plugin/data/data.md) | 資料存取層設計 — DAL 架構、Plugin 間資料隔離 |
+| [logging.md](docs/core-plugin/logging/logging.md) | Logging 模組設計 — 日誌格式、追蹤、稽核 |
+| [configuration.md](docs/core-plugin/configuration/configuration.md) | 配置管理設計 — 分層設定、Plugin 註冊、動態更新 |
 | [writing-guide.md](docs/writing-guide.md) | 文件撰寫指南 |
 | [checklist.md](docs/checklist.md) | 文件完成度檢查表（含閱讀順序） |
 
@@ -104,10 +106,18 @@ h8/
 - [x] DAL — 資料存取層
 
 ### 基礎設施層
-- [ ] Logging — 日誌記錄，追蹤系統行為、錯誤診斷
-- [ ] Configuration — 配置管理，環境變數、設定檔讀取
-- [ ] Caching — 快取機制，提升效能、減少資料庫壓力
+- [x] Logging — 日誌記錄（設計完成，依賴 Configuration）
+- [x] **Configuration** — 配置管理，環境變數、設定檔讀取
+- [ ] Caching — 快取機制，提升效能、減少資料庫壓力 ⬅️ 下一步
 - [ ] Event/Message Bus — 事件匯流排，模組間解耦通訊
+
+#### Configuration 需支援的設定項（已知）
+
+| 來源模組 | 設定項 | 說明 |
+|---------|-------|------|
+| Logging | `logging.retention.<type>` | 各類型日誌保留期限 |
+| Logging | `logging.level` | 日誌層級 (debug/info/warn/error) |
+| Logging | `logging.format` | 輸出格式 (json/text) |
 
 ### 應用服務層
 - [ ] Validation — 資料驗證，輸入檢查、業務規則驗證
