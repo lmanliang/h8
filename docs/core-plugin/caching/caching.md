@@ -34,7 +34,7 @@ flowchart TB
     subgraph CacheModule [Caching 模組]
         CacheManager[Cache Manager]
         Namespace[Namespace Handler]
-        Serializer[Serializer (Marshal/JSON)]
+        Serializer["Serializer (Marshal/JSON)"]
     end
     
     CacheManager --> Namespace
