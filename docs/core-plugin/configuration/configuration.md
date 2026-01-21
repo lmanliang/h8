@@ -161,15 +161,3 @@ end
 *   **儲存**：標記為 `secret: true` 的設定，在寫入 DB 前使用 Rails `ActiveSupport::MessageEncryptor` 加密。
 *   **顯示**：在 Admin UI 或 Logs 中，預設顯示為 `******` 或部分遮罩。
 *   **輸出**：`H8.config.get` 預設回傳解密後明文，供程式內部使用。
-
----
-
-## 給 Logging 模組的支援
-
-回應 `logging.md` 的需求，Configuration 模組將提供以下支援：
-
-| Key | 預設值 | 來源 |
-|-----|-------|------|
-| `logging.retention.app` | 90 (days) | DB / File |
-| `logging.level` | `info` | ENV / DB |
-| `logging.format` | `json` | ENV / File |

@@ -425,9 +425,29 @@ end
 | production | Console (STDOUT) | JSON（結構化）|
 
 **說明**：
-- 採用 [12-Factor App](https://12factor.net/logs) 原則，應用程式只輸出到 STDOUT
-- 日誌收集、轉發、儲存由執行環境（Container / Kubernetes）處理
-- 不在應用程式層處理日誌檔案輪轉
+- 採用 [12-Factor App](https://12factor.net/logs) 原則，應用程式只輸出到 STDOUT。
+- 日誌收集、轉發、儲存由執行環境（Container / Kubernetes）處理。
+- 不在應用程式層處理日誌檔案輪轉。
+- **單行原則 (One Log Per Line)**：無論是 JSON (JSON Lines) 或 Text 格式，每筆日誌必定不換行，以避免 Log Collector 解析錯誤或多行堆疊錯亂。
+
+### 日誌收集架構 (Log Aggregation)
+
+應用程式不直接連接外部日誌服務，而是透過標準輸出 (STDOUT) 交由基礎設施處理。這種「應用程式不知情」的設計能最大程度降低耦合度。
+
+```mermaid
+flowchart LR
+    App[Rails App] -->|JSON Stream| STDOUT[STDOUT/STDERR]
+    STDOUT -->|Capture| Container[Container Runtime]
+    Container -->|File| Node[Worker Node Storage]
+    
+    subgraph Infrastructure [基礎設施層]
+        Node -->|Read| Collector[Log Collector<br/>Fluentd / Fluent Bit]
+        Collector -->|Forward| Buffer[Buffer]
+        Buffer -->|Write| OpenSearch[OpenSearch / ELK]
+    end
+```
+
+這意味著 Rails `config.log_formatter` 必須確保 Production 環境輸出的是 **單行 JSON**，以便 Collector 解析。
 
 ---
 

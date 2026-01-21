@@ -69,6 +69,7 @@ flowchart TB
 | [data.md](docs/core-plugin/data/data.md) | 資料存取層設計 — DAL 架構、Plugin 間資料隔離 |
 | [logging.md](docs/core-plugin/logging/logging.md) | Logging 模組設計 — 日誌格式、追蹤、稽核 |
 | [configuration.md](docs/core-plugin/configuration/configuration.md) | 配置管理設計 — 分層設定、Plugin 註冊、動態更新 |
+| [caching.md](docs/core-plugin/caching/caching.md) | 快取機制 — Plugin 隔離、失效策略、Redis 整合 |
 | [writing-guide.md](docs/writing-guide.md) | 文件撰寫指南 |
 | [checklist.md](docs/checklist.md) | 文件完成度檢查表（含閱讀順序） |
 
@@ -108,8 +109,9 @@ h8/
 ### 基礎設施層
 - [x] Logging — 日誌記錄（設計完成，依賴 Configuration）
 - [x] **Configuration** — 配置管理，環境變數、設定檔讀取
-- [ ] Caching — 快取機制，提升效能、減少資料庫壓力 ⬅️ 下一步
-- [ ] Event/Message Bus — 事件匯流排，模組間解耦通訊
+- [x] **Caching** — 快取機制，提升效能、減少資料庫壓力
+- [ ] Event/Message Bus — 事件匯流排，模組間解耦通訊 ⬅️ 下一步
+
 
 #### Configuration 需支援的設定項（已知）
 
