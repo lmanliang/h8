@@ -13,8 +13,8 @@
 | 文件 | 說明 | 閱讀順序 | 狀態 |
 |-----|------|---------|------|
 | [spec.md](spec.md) | 專案規格書 | 1 | ✅ 完成 |
-| [permissions.md](permissions.md) | 權限機制設計 | 2 | ✅ 完成 |
-| [data.md](data.md) | 資料存取層設計 | 3 | ✅ 完成 |
+| [permissions.md](core-plugin/permissions/permissions.md) | 權限機制設計 | 2 | ✅ 完成 |
+| [data.md](core-plugin/data/data.md) | 資料存取層設計 | 3 | ✅ 完成 |
 | [writing-guide.md](writing-guide.md) | 文件撰寫指南 | - | ✅ 完成 |
 | [checklist.md](checklist.md) | 文件完成度檢查表 | - | ✅ 完成 |
 
@@ -24,7 +24,7 @@
 
 | 文件 | 說明 | 閱讀順序 | 狀態 | 優先順序 |
 |-----|------|---------|------|---------|
-| [core-plugin-guide.md](core-plugin-guide.md) | Core Plugin 開發指南（平台方） | 4 | 🚧 進行中 | P0 |
+| [core-plugin-guide.md](core-plugin/core-plugin-guide.md) | Core Plugin 開發指南（平台方） | 4 | 🚧 進行中 | P0 |
 | `plugin-dev-guide.md` | Plugin 開發指南（第三方廠商） | 5 | ⬜ 未開始 | P0 |
 | `plugin-lifecycle.md` | Plugin 上架流程 | 6 | ⬜ 未開始 | P0 |
 | `api-spec.md` | API 規範 | 7 | ⬜ 未開始 | P1 |

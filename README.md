@@ -64,14 +64,14 @@ flowchart TB
 | [spec.md](docs/spec.md) | 專案規格書 — 系統架構、元件說明、技術選型 |
 | [naming-conventions.md](docs/naming-conventions.md) | 命名規範 |
 | [core-plugin-guide.md](docs/core-plugin/core-plugin-guide.md) | 核心 Plugin 開發指南 |
-| [auth/README.md](docs/core-plugin/auth/README.md) | 認證機制設計 — 身份驗證、Token 管理 |
+| [auth.md](docs/core-plugin/auth/auth.md) | 認證機制設計 — 身份驗證、Token 管理 |
 | [permissions.md](docs/core-plugin/permissions/permissions.md) | 權限機制設計 — 分層權限、細粒度資源控制 |
 | [data.md](docs/core-plugin/data/data.md) | 資料存取層設計 — DAL 架構、Plugin 間資料隔離 |
 | [logging.md](docs/core-plugin/logging/logging.md) | Logging 模組設計 — 日誌格式、追蹤、稽核 |
 | [configuration.md](docs/core-plugin/configuration/configuration.md) | 配置管理設計 — 分層設定、Plugin 註冊、動態更新 |
 | [caching.md](docs/core-plugin/caching/caching.md) | 快取機制 — Plugin 隔離、失效策略、Redis 整合 |
+| [event-bus.md](docs/core-plugin/event-bus/event-bus.md) | 事件匯流排 — Pub/Sub 機制、模組解耦 |
 | [writing-guide.md](docs/writing-guide.md) | 文件撰寫指南 |
-| [checklist.md](docs/checklist.md) | 文件完成度檢查表（含閱讀順序） |
 
 ---
 
@@ -84,11 +84,10 @@ h8/
 │   ├── spec.md
 │   ├── naming-conventions.md
 │   ├── writing-guide.md
-│   ├── checklist.md
 │   └── core-plugin/
 │       ├── core-plugin-guide.md
 │       ├── auth/
-│       │   └── README.md
+│       │   └── auth.md
 │       ├── data/
 │       │   └── data.md
 │       └── permissions/
@@ -99,52 +98,57 @@ h8/
 
 ---
 
-## TODO - 核心模組規劃
+## 待辦事項 (Roadmap)
 
-### 已完成
-- [x] AUTH — 認證機制
-- [x] Permission — 權限管理
-- [x] DAL — 資料存取層
+### 已完成 (Done)
+- [x] **Spec** — [專案規格書](docs/spec.md)
+- [x] **Auth** — [認證機制](docs/core-plugin/auth/auth.md)
+- [x] **Permission** — [權限管理](docs/core-plugin/permissions/permissions.md)
+- [x] **DAL** — [資料存取層](docs/core-plugin/data/data.md)
+- [x] **Writing Guide** — [文件撰寫指南](docs/writing-guide.md)
+- [x] **Infrastructure**
+    - [x] [Logging](docs/core-plugin/logging/logging.md) — 日誌記錄
+    - [x] [Configuration](docs/core-plugin/configuration/configuration.md) — 配置管理
+    - [x] [Caching](docs/core-plugin/caching/caching.md) — 快取機制
+    - [x] [Event/Message Bus](docs/core-plugin/event-bus/event-bus.md) — 事件匯流排
 
-### 基礎設施層
-- [x] Logging — 日誌記錄（設計完成，依賴 Configuration）
-- [x] **Configuration** — 配置管理，環境變數、設定檔讀取
-- [x] **Caching** — 快取機制，提升效能、減少資料庫壓力
-- [ ] Event/Message Bus — 事件匯流排，模組間解耦通訊 ⬅️ 下一步
+### 進行中 (In Progress)
+- [ ] **Core Plugin Guide** — [核心 Plugin 開發指南](docs/core-plugin/core-plugin-guide.md) (Draft)
 
+### 待撰寫文件 (Documentation Queue)
 
-#### Configuration 需支援的設定項（已知）
+#### P0: 核心開發規範
+- [ ] `plugin-dev-guide.md` (Plugin 開發指南)
+  - 目錄結構、命名規範、Engine 設定、角色宣告、Policy 撰寫、DAL 使用
+- [ ] `plugin-lifecycle.md` (Plugin 上架流程)
+  - 註冊流程、審核標準、版本管理、下架機制
 
-| 來源模組 | 設定項 | 說明 |
-|---------|-------|------|
-| Logging | `logging.retention.<type>` | 各類型日誌保留期限 |
-| Logging | `logging.level` | 日誌層級 (debug/info/warn/error) |
-| Logging | `logging.format` | 輸出格式 (json/text) |
+#### P1: 技術規格
+- [ ] `api-spec.md` (API 規範)
+  - RESTful 設計、錯誤碼、分頁、Header 格式
+- [ ] `database-spec.md` (資料庫規範)
+  - Table 命名、Migration 規範、Index 指南
 
-### 應用服務層
-- [ ] Validation — 資料驗證，輸入檢查、業務規則驗證
-- [ ] Error Handling — 錯誤處理，統一例外處理、錯誤回應格式
-- [ ] Localization (i18n) — 多語系支援，國際化翻譯
-- [ ] Job Scheduler — 排程任務，定時執行背景工作
-- [ ] Notification — 通知服務，Email、SMS、推播等
+#### P2: 進階架構
+- [ ] `frontend-spec.md` (前端架構規範)
+  - Hotwire、UI 元件、樣式指南
+- [ ] `deployment.md` (部署架構)
+  - Docker、Kamal、環境變數
+- [ ] `testing-guide.md` (測試策略)
 
-### 安全與監控
-- [ ] Audit Trail — 稽核日誌，記錄使用者操作歷程
-- [ ] Rate Limiting — 流量限制，防止濫用
-- [ ] Health Check — 健康檢查，服務狀態監控
-
-### 開發輔助
-- [ ] Dependency Injection (DI) — 依賴注入容器
-- [ ] Middleware Pipeline — 中介軟體管線
-- [ ] File Storage — 檔案儲存抽象層
-
-### 專案建置
-- [ ] Plugin 註冊與發布流程
-- [ ] 開發環境建置指南
-- [ ] CI/CD 流程
+### 功能模組規劃 (Feature Backlog)
+- [ ] **Validation** — 資料驗證
+- [ ] **Error Handling** — 全域錯誤處理
+- [ ] **Localization (i18n)** — 多語系
+- [ ] **Job Scheduler** — 排程
+- [ ] **Notification** — 通知服務
+- [ ] **Audit Trail** — 稽核日誌
+- [ ] **Rate Limiting** — 流量限制
+- [ ] **Health Check** — 健康檢查
 
 ---
 
 ## 狀態
 
 🚧 **規劃階段** — 目前專注於架構設計與文件撰寫
+
