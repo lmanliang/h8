@@ -38,9 +38,9 @@ flowchart TB
         DAL[data_access 資料層]
     end
     
-    subgraph Biz[業務 Plugin - 無前置]
-        P1[Plugin A]
-        P2[Plugin B]
+    subgraph Biz[業務 Plugin - h8_ 前置]
+        P1[h8_plugin_a]
+        P2[h8_plugin_b]
     end
 ```
 
@@ -116,18 +116,18 @@ end
 
 ### 業務 Plugin 的 Table
 
-**規則**：以 Plugin 名稱為前置，避免衝突
+**規則**：以 Plugin 名稱為前置 (Namespace)，避免衝突。建議加上 `h8_` 統一前綴。
 
 | Plugin | Table 範例 |
 |--------|-----------|
-| plugin_a | `plugin_a_orders`, `plugin_a_products` |
-| plugin_b | `plugin_b_tickets`, `plugin_b_comments` |
+| h8_plugin_a | `h8_plugin_a_orders`, `h8_plugin_a_products` |
+| h8_plugin_b | `h8_plugin_b_tickets`, `h8_plugin_b_comments` |
 
 ```ruby
 # Plugin A 的 Model
-module PluginA
+module H8::PluginA
   class Order < ApplicationRecord
-    self.table_name = 'plugin_a_orders'
+    self.table_name = 'h8_plugin_a_orders'
   end
 end
 ```

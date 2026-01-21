@@ -94,7 +94,7 @@ flowchart LR
   "level": "INFO",
   "logger": "PluginA::OrderService",
   "message": "Order created successfully",
-  "trace_id": "abc123def456",
+  "request_id": "abc123def456",
   "context": {
     "user_id": "550e8400-e29b-41d4-a716-446655440000",
     "plugin": "plugin_a"
@@ -110,7 +110,7 @@ flowchart LR
 | `level` | string | ✅ | 日誌層級 | 呼叫的方法決定 |
 | `logger` | string | ✅ | 日誌來源 | `self.class.name` |
 | `message` | string | ✅ | 日誌訊息 | 呼叫者傳入 |
-| `trace_id` | string | ✅ | 請求追蹤 ID | Middleware 注入 |
+| `request_id` | string | ✅ | 請求追蹤 ID | Middleware 注入 |
 | `context` | object | ⬜ | 業務上下文 | 呼叫者傳入 |
 | `error` | object | ⬜ | 錯誤資訊 | 呼叫者傳入（含 stack trace）|
 
@@ -153,7 +153,7 @@ classDiagram
     }
     
     class LogContext {
-        +trace_id
+        +request_id
         +user_id
         +plugin
         +push(key, value)
@@ -269,7 +269,7 @@ CorePlugin::Logging.audit(
 
 ## Request Tracing
 
-### Trace ID 生成與傳遞
+### Request ID 生成與傳遞
 
 ```mermaid
 sequenceDiagram
@@ -278,23 +278,23 @@ sequenceDiagram
     participant Rails
     
     Client->>Kong: Request
-    Kong->>Rails: Request (可能帶 X-Trace-ID)
-    Rails->>Rails: 取得或生成 trace_id
+    Kong->>Rails: Request (帶 X-Request-Id)
+    Rails->>Rails: 取得或生成 request_id
     Rails->>Rails: 存入 LogContext
-    Rails-->>Kong: Response + X-Trace-ID
+    Rails-->>Kong: Response + X-Request-Id
     Kong-->>Client: Response
 ```
 
-### Trace ID 規格
+### Request ID 規格
 
 | 項目 | 規格 |
 |------|------|
 | 格式 | UUID v4 |
-| Header 名稱 | `X-Trace-ID` |
-| 生成者 | Rails Middleware |
+| Header 名稱 | `X-Request-Id` |
+| 生成者 | Rails Middleware / Kong |
 | 生成方式 | `SecureRandom.uuid` |
 
-**注意**：若上游已帶有 `X-Trace-ID` Header，則沿用該值，否則由 Rails 生成。
+**注意**：優先使用上游 (Kong) 帶入的 `X-Request-Id`，若無則由 Rails 生成。
 
 ### Middleware 實作
 
@@ -307,14 +307,14 @@ module CorePlugin
       end
       
       def call(env)
-        # 優先使用上游傳入的 trace_id，否則自行生成
-        trace_id = env['HTTP_X_TRACE_ID'].presence || SecureRandom.uuid
+        # 優先使用上游傳入的 request_id，否則自行生成
+        request_id = env['HTTP_X_REQUEST_ID'].presence || SecureRandom.uuid
         
-        CorePlugin::Logging.with_context(trace_id: trace_id) do
+        CorePlugin::Logging.with_context(request_id: request_id) do
           status, headers, response = @app.call(env)
           
-          # 回傳時帶上 trace_id，方便追蹤
-          headers['X-Trace-ID'] = trace_id
+          # 回傳時帶上 request_id，方便追蹤
+          headers['X-Request-Id'] = request_id
           
           [status, headers, response]
         end
@@ -574,3 +574,28 @@ Plugin 的日誌自動包含 Plugin 識別：
 | Buffer 機制 | 記憶體 / Redis / 其他 |
 | Buffer 大小 | 依實際流量決定 |
 | 失敗處理策略 | 丟棄 / 重試 / 降級 |
+
+---
+
+## 設定參數
+
+> 以下參數將註冊在 Configuration 模組中，供系統與使用者調整。
+
+| Key | 預設值 | 類型 | 說明 | 建議來源 |
+|-----|-------|------|------|---------|
+| `logging.retention.app` | 90 | Integer | 應用程式日誌保留天數 | DB / File |
+| `logging.retention.audit` | 365 | Integer | 稽核日誌 (Audit Log) 保留天數 | DB / File |
+| `logging.level` | `info` | String | 日誌層級 (debug/info/warn/error) | ENV / DB |
+| `logging.format` | `json` | String | 輸出格式 (json/text) | ENV / File |
+| `logging.output` | `stdout` | String | 輸出目標 (stdout/file) | ENV |
+
+### 設定範例 (config/h8.yml)
+
+```yaml
+logging:
+  retention:
+    app: 90
+    audit: 365
+  level: "info"
+  format: "json"
+```
