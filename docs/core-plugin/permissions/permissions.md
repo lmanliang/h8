@@ -2,36 +2,23 @@
 
 ## 概述
 
-本文件說明 Plugin 架構中的權限控制機制，包含 Rails 生態系的權限工具、為何採用「行政嚴格、技術引導」策略，以及細粒度資源權限的實作方式。
+本文件規範 Plugin 架構中的權限控制機制。為確保 Plugin 間的資料隔離與安全性，系統採用「行政嚴格、技術引導」策略，並透過 **資料存取層 (DAL)** 強制執行資源權限檢查。
 
 ---
 
-## Rails 生態系權限工具
+## 背景與設計決策
 
-### 常見權限 Gems
+標準 Rails 生態系的權限 Gem（如 Pundit, CanCanCan）多採用「合作式」設計，假設程式碼會自願進行權限檢查。然而在 Plugin 架構中，我們不能假設第三方 Plugin 會自律。
 
-| Gem | 類型 | 說明 |
-|-----|------|------|
-| **Pundit** | Policy-based | 定義「誰能對什麼資源做什麼操作」 |
-| **CanCanCan** | Ability-based | 集中式權限定義 |
-| **Action Policy** | Policy-based | 類似 Pundit，支援 i18n、快取等 |
-
-### 為什麼這些 Gem 無法解決隔離問題？
-
-這些權限 Gem 都是「**合作式**」設計 — 假設所有程式碼都會自願使用權限檢查：
+若無適當隔離，惡意 Plugin 可輕易繞過檢查：
 
 ```ruby
-# 惡意 Plugin 可以完全繞過權限檢查
-class EvilPlugin
-  def steal_data
-    # 直接呼叫 ActiveRecord，不經過任何權限檢查
-    User.all                              # ← 無法阻止
-    PluginB::Order.where(status: 'paid')  # ← 無法阻止
-  end
-end
+# 惡意 Plugin 可能直接呼叫 ActiveRecord 繞過檢查
+User.all
+PluginB::Order.where.not(status: 'paid')
 ```
 
-Ruby 是動態語言，無法在語言層面禁止存取其他 class。
+因此，本系統**不直接依賴**這些合作式 Gem 來做跨 Plugin 防護，而是建立強制性的 **DataAccess Layer (DAL)**。
 
 ---
 
@@ -58,48 +45,67 @@ flowchart TB
 |-----|---------|---------|
 | **Plugin 註冊** | Plugin 是否已啟用 | Engine initializer |
 | **Role 驗證** | Plugin 是否擁有該 Role | 核心 Plugin 的 Role 模組 |
-| **資源權限** | Role 對 Table 的操作權限 | Pundit / 自訂 Policy / DAL |
+| **資源權限** | Role 對 Table 的操作權限 | **Data Access Layer (DAL)** |
 
 ---
 
-## 細粒度資源權限
+## 資源存取規範 (DAL)
 
-### 情境說明
+所有 Plugin 開發者必須遵守以下規範：
 
-Plugin A 管理 TableA 和 TableB：
-- `a_role` 可以**讀寫** TableA
-- `a_role` 只能**讀取** TableB（不能寫入）
-- `admin_role` 可以**讀寫**兩者
+1.  **禁止直接存取 Model**：Plugin 不可直接呼叫其他 Plugin 或核心系統的 ActiveRecord Model (如 `User` 或 `PluginB::Order`)。
+2.  **必須使用 DataAccess API**：所有跨邊界的資料讀寫操作，必須透過 `DataAccess::API` 進行。
 
-### 權限定義表
+### API 介面定義
 
+系統提供統一的存取介面，自動進行權限驗證：
+
+```ruby
+module DataAccess
+  class API
+    # 寫入資源
+    # @param resource [String] 資源名稱 (e.g., 'TableA')
+    # @param attributes [Hash] 寫入資料
+    # @param requester [String] 呼叫端 Plugin 名稱
+    # @param role [String] 使用的角色
+    # @raise [UnauthorizedError] 若權限不足則拋出例外
+    def self.write(resource, attributes, requester:, role:)
+      # ... implementation details hidden ...
+    end
+
+    # 讀取資源
+    def self.read(resource, query, requester:, role:)
+      # ...
+    end
+  end
+end
 ```
-| plugin_name | role       | resource | actions           |
-|-------------|------------|----------|-------------------|
-| plugin_a    | a_role     | TableA   | read,write,delete |
-| plugin_a    | a_role     | TableB   | read              |
-| plugin_a    | admin_role | TableA   | read,write,delete |
-| plugin_a    | admin_role | TableB   | read,write        |
+
+### 權限定義配置
+
+權限表定義於各 Plugin 的配置檔中，格式如下：
+
+```ruby
+# 範例配置
+PERMISSIONS = {
+  'plugin_a' => {
+    'a_role' => {
+      'TableA' => [:read, :write, :delete],
+      'TableB' => [:read]
+    },
+    'admin_role' => {
+      'TableA' => [:read, :write, :delete],
+      'TableB' => [:read, :write]
+    }
+  }
+}
 ```
 
-### 實作方式一：DAL 層控制
+### 實作範例
 
 ```ruby
 module DataAccess
   class Permission
-    PERMISSIONS = {
-      'plugin_a' => {
-        'a_role' => {
-          'TableA' => [:read, :write, :delete],
-          'TableB' => [:read]  # 只能讀，不能寫
-        },
-        'admin_role' => {
-          'TableA' => [:read, :write, :delete],
-          'TableB' => [:read, :write]
-        }
-      }
-    }
-    
     def self.can?(plugin:, role:, resource:, action:)
       PERMISSIONS.dig(plugin, role, resource)&.include?(action) || false
     end
@@ -117,55 +123,6 @@ module DataAccess
       end
       
       resource.constantize.create(attributes)
-    end
-  end
-end
-```
-
-### 實作方式二：Pundit Policy
-
-```ruby
-# app/policies/plugin_a/table_b_policy.rb
-module PluginA
-  class TableBPolicy
-    attr_reader :context, :record
-    
-    def initialize(context, record)
-      @context = context  # 包含 plugin_name, role
-      @record = record
-    end
-    
-    def read?
-      true  # 所有 role 都能讀
-    end
-    
-    def write?
-      context.role == 'admin_role'  # 只有 admin_role 能寫
-    end
-    
-    def delete?
-      false  # 都不能刪
-    end
-  end
-end
-```
-
-### 實作方式三：Model Callback
-
-```ruby
-module PluginA
-  class TableB < ApplicationRecord
-    before_save :check_write_permission!
-    
-    private
-    
-    def check_write_permission!
-      current_context = RequestStore.store[:plugin_context]
-      
-      unless current_context&.role == 'admin_role'
-        raise ActiveRecord::RecordNotSaved, 
-              "Role #{current_context&.role} 無權寫入 TableB"
-      end
     end
   end
 end
@@ -197,30 +154,13 @@ sequenceDiagram
 
 ---
 
-## 輔助工具：RuboCop 自訂規則
+## 靜態分析規範 (RuboCop)
 
-雖然無法技術強制，但可以用 **RuboCop**（Ruby 靜態分析工具）在 CI/CD 階段自動檢查：
+為輔助開發者遵守上述規範，CI/CD 流程中已整合 RuboCop 靜態分析工具。
 
-```ruby
-# 自訂規則：偵測 Plugin 中直接存取 User model
-module RuboCop
-  module Cop
-    module PluginPolicy
-      class NoDirectUserAccess < Base
-        MSG = '請使用 DataAccess::API 存取共用資料'
-        
-        def_node_matcher :direct_user_access?, <<~PATTERN
-          (send (const nil? :User) ...)
-        PATTERN
-        
-        def on_send(node)
-          add_offense(node) if direct_user_access?(node)
-        end
-      end
-    end
-  end
-end
-```
+*   **規則名稱**: `PluginPolicy/NoDirectUserAccess`
+*   **檢查行為**: 偵測並禁止 Plugin 中直接存取全域 Model (如 `User`, `Order` 等)。
+*   **修正方式**: 請改用 `DataAccess::API` 存取共用資料。
 
 ```mermaid
 flowchart LR
@@ -238,8 +178,8 @@ flowchart LR
 |-----|------|---------|
 | **Plugin 註冊** | 未註冊的 Plugin 無法啟用 | 技術強制 |
 | **Role 機制** | Plugin 須向系統申請 Role | 技術強制 |
-| **資源權限** | 透過 DAL / Policy 檢查 | 技術引導 |
-| **靜態分析** | RuboCop 自訂規則 | 自動化輔助 |
+| **資源權限** | **必須**透過 DAL 介面存取 | 技術/規範強制 |
+| **靜態分析** | RuboCop 自動檢查違規代碼 | 自動化輔助 |
 | **行政流程** | Code Review + 上架審核 | 行政強制 |
 
 核心原則：

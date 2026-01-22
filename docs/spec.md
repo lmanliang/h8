@@ -203,30 +203,35 @@ flowchart TB
         direction TB
     end
     
-    subgraph Core["核心 Plugin (Core)"]
-        Auth[認證模組]
-        Role[權限模組]
-        Base[基本資料]
-        Data[資料存取層]
+    subgraph L0["L0: Infrastructure (基礎)"]
+        Auth[h8_core: 認證/權限/DAL]
+    end
+
+    subgraph L1["L1: Essentials (核心要素)"]
+        Users[h8_users]
+        Orgs[h8_orgs]
     end
     
-    subgraph Biz["業務 Plugin (可插拔)"]
-        P1[Plugin A]
-        P2[Plugin B]
-        P3[Plugin C]
+    subgraph L2["L2: Plugins (應用擴充)"]
+        P1[h8_blog]
+        P2[h8_shop]
     end
     
-    Main --> Core
-    Main --> Biz
-    Biz -.->|依賴| Core
+    Main --> L0
+    Main --> L1
+    Main --> L2
+    
+    L2 --> L1
+    L1 --> L0
 ```
 
 ### Plugin 分類
 
-| 類型 | 說明 | 可否移除 | 維護者 |
-|------|------|---------|--------|
-| 核心 Plugin | 認證、權限、基本資料、資料存取層 | ❌ 不行 | 主導者 |
-| 業務 Plugin | 各種業務功能模組 | ✅ 可以 | 各廠商 |
+| 層級 | 類型 | 說明 | 範例 | 可否移除 | 維護者 |
+|:---:|:---|:-----|:-----|:---:|:---:|
+| **L0** | Infrastructure | 基礎設施，與業務無關的底層與共用介面 | `h8_core` | ❌ | 核心團隊 |
+| **L1** | Essentials | 核心要素，系統運作不可或缺的通用業務 | `h8_users`, `h8_orgs` | ❌ | 核心團隊 |
+| **L2** | Plugins | 應用擴充，針對特定領域的垂直業務功能 | `h8_blog`, `h8_shop` | ✅ | 各廠商/社群 |
 
 ### Plugin 限制
 

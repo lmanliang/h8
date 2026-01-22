@@ -24,27 +24,33 @@ flowchart TB
     User[使用者]
     Kong[Kong API Gateway<br/>流量分發]
     Keycloak[Keycloak<br/>身份認證]
-    Rails[Rails 主程式]
-    CorePlugin[核心 Plugin]
-    PluginA[Plugin A]
-    PluginB[Plugin B]
+    
+    subgraph Rails[Rails 主程式]
+        direction BT
+        L0["L0: Infrastructure<br/>(h8_core)"]
+        L1["L1: Essentials<br/>(h8_users)"]
+        L2["L2: Plugins<br/>(h8_blog)"]
+        
+        L2 --> L1
+        L1 --> L0
+    end
 
     User --> Kong
     Kong --> Rails
     Kong <--> Keycloak
-    Rails --> CorePlugin
-    Rails --> PluginA
-    Rails --> PluginB
 ```
 
 ---
 
-## Plugin 類型
+## 系統分層架構
 
-| 類型 | 開發者 | 可否移除 | 說明 |
-|-----|-------|---------|------|
-| 核心 Plugin (Core) | 平台方 | ❌ | 認證、權限、DAL |
-| 業務 Plugin | 各廠商 | ✅ | 實際業務功能 |
+h8 採用三層式架構設計，確保系統的穩定性與擴充彈性：
+
+| 層級 | 名稱 | 角色 | 職責 | 範例 |
+|:---:|:---|:---:|:-----|:-----|
+| **L0** | **Infrastructure**<br/>(基礎設施) | 地基 | 處理與業務無關的底層邏輯，提供統一 API 給上層使用。 | `h8_core`<br/>(Auth, Logging, DAL) |
+| **L1** | **Essentials**<br/>(核心要素) | 骨架 | 系統運作不可或缺的通用業務單元，多數 Plugin 都會依賴此層。 | `h8_users`<br/>`h8_organizations` |
+| **L2** | **Plugins**<br/>(應用擴充) | 皮膚 | 針對特定領域的垂直業務功能，可隨需安裝或移除。 | `h8_blog`<br/>`h8_shop` |
 
 ---
 
@@ -61,8 +67,9 @@ flowchart TB
 
 | 文件 | 說明 |
 |-----|------|
-| [spec.md](docs/spec.md) | 專案規格書 — 系統架構、元件說明、技術選型 |
+| [writing-guide.md](docs/writing-guide.md) | 文件撰寫指南 |
 | [naming-conventions.md](docs/naming-conventions.md) | 命名規範 |
+| [spec.md](docs/spec.md) | 專案規格書 — 系統架構、元件說明、技術選型 |
 | [core-plugin-guide.md](docs/core-plugin/core-plugin-guide.md) | 核心 Plugin 開發指南 |
 | [auth.md](docs/core-plugin/auth/auth.md) | 認證機制設計 — 身份驗證、Token 管理 |
 | [permissions.md](docs/core-plugin/permissions/permissions.md) | 權限機制設計 — 分層權限、細粒度資源控制 |
@@ -71,7 +78,7 @@ flowchart TB
 | [configuration.md](docs/core-plugin/configuration/configuration.md) | 配置管理設計 — 分層設定、Plugin 註冊、動態更新 |
 | [caching.md](docs/core-plugin/caching/caching.md) | 快取機制 — Plugin 隔離、失效策略、Redis 整合 |
 | [event-bus.md](docs/core-plugin/event-bus/event-bus.md) | 事件匯流排 — Pub/Sub 機制、模組解耦 |
-| [writing-guide.md](docs/writing-guide.md) | 文件撰寫指南 |
+
 
 ---
 
