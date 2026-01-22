@@ -21,6 +21,45 @@ Caching 模組旨在透過快取機制提升 `h8` 生態系的整體效能，降
 
 ---
 
+## 架構定位
+
+Caching 模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        
+        style Cache fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | Caching 模組位於此層，提供統一的快取介面給所有上層使用 |
+| **L1** | Essentials Plugin 可透過 `H8.cache` 進行快取操作 |
+| **L2** | 業務 Plugin 使用 `plugin.cache` 存取隔離的命名空間 |
+
+---
+
 ## 架構設計
 
 系統基於 Rails `ActiveSupport::Cache` 進行擴充，主要增加了**命名空間管理**與**Plugin 輔助方法**。

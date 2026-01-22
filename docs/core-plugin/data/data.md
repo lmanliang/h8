@@ -8,6 +8,45 @@
 
 ## 架構定位
 
+DAL 模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        
+        style DAL fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | DAL 模組位於此層，提供安全的跨邊界資料存取介面 |
+| **L1** | Essentials Plugin 可直接存取自己的 Table，共用資料透過 DAL |
+| **L2** | 業務 Plugin 必須透過 DAL 存取共用資料，禁止直接存取其他 Plugin 的 Table |
+
+---
+
+## 模組架構
+
 ```mermaid
 flowchart TB
     subgraph Core[核心 Plugin（基礎設施）]

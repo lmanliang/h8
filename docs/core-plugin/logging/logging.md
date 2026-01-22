@@ -23,6 +23,45 @@ Logging 模組是核心 Plugin 的基礎設施之一，負責提供統一的日�
 
 ## 架構定位
 
+Logging 模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        
+        style Log fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | Logging 模組位於此層，提供統一的日誌記錄介面 |
+| **L1** | Essentials Plugin 使用 `H8.logger` 記錄核心業務事件 |
+| **L2** | 業務 Plugin 使用 `plugin.logger` 記錄應用層事件 |
+
+---
+
+## 模組架構
+
 ```mermaid
 flowchart TB
     subgraph Core[核心 Plugin]

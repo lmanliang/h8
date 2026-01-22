@@ -26,6 +26,45 @@
 
 ---
 
+## 架構定位
+
+認證模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        
+        style Auth fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | Auth 模組位於此層，統一管控所有身份驗證 |
+| **L1** | Essentials Plugin 依賴 Auth 進行使用者身份識別 |
+| **L2** | 業務 Plugin 透過 `core_current_user` 取得已驗證的使用者 |
+
+---
+
 ## 系統架構
 
 ### 網路架構

@@ -6,6 +6,46 @@
 
 ---
 
+## 架構定位
+
+權限模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        Perm[Permissions]
+        
+        style Perm fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | 權限模組位於此層，統一管控角色與資源存取權限 |
+| **L1** | Essentials Plugin 透過 Role 機制取得系統核心資源權限 |
+| **L2** | 業務 Plugin 需宣告 Role 需求，經管理員核准後方可存取 |
+
+---
+
 ## 背景與設計決策
 
 標準 Rails 生態系的權限 Gem（如 Pundit, CanCanCan）多採用「合作式」設計，假設程式碼會自願進行權限檢查。然而在 Plugin 架構中，我們不能假設第三方 Plugin 會自律。
@@ -22,23 +62,23 @@ PluginB::Order.where.not(status: 'paid')
 
 ---
 
-## 權限分層架構
+## 權限檢查分層
 
 ```mermaid
 flowchart TB
-    subgraph L1[第一層：Plugin 註冊]
+    subgraph Layer1[第一層：Plugin 註冊]
         Reg[Plugin 必須註冊才能啟用]
     end
     
-    subgraph L2[第二層：Role 取得]
+    subgraph Layer2[第二層：Role 取得]
         Role[Plugin 向系統申請 Role]
     end
     
-    subgraph L3[第三層：資源權限]
+    subgraph Layer3[第三層：資源權限]
         Perm[Role 對特定 Table 的操作權限]
     end
     
-    L1 --> L2 --> L3
+    Layer1 --> Layer2 --> Layer3
 ```
 
 | 層級 | 檢查內容 | 實作方式 |

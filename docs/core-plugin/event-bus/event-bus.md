@@ -20,6 +20,45 @@ Event Bus (事件匯流排) 是實現 Plugin 間「鬆散耦合 (Loose Coupling)
 
 ---
 
+## 架構定位
+
+Event Bus 模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        
+        style Event fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | Event Bus 模組位於此層，提供跨模組的 Pub/Sub 機制 |
+| **L1** | Essentials Plugin 可發佈與訂閱系統核心事件 |
+| **L2** | 業務 Plugin 透過事件機制與其他 Plugin 解耦互動 |
+
+---
+
 ## 架構設計
 
 本模組基於 Rails 標準的 **ActiveSupport::Notifications** 進行封裝，並整合 **ActiveJob** 以支援非同步事件。

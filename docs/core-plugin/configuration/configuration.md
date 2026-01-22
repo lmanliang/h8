@@ -21,6 +21,45 @@ Configuration 模組負責管理整個 `h8` 生態系的設定，包含核心設
 
 ---
 
+## 架構定位
+
+Configuration 模組屬於 **L0: Infrastructure（基礎設施層）**，是 `h8_core` 的一部分。
+
+```mermaid
+flowchart TB
+    subgraph L0["L0: Infrastructure"]
+        direction LR
+        Auth[Auth]
+        DAL[DAL]
+        Log[Logging]
+        Cache[Caching]
+        Config[Configuration]
+        Event[Event Bus]
+        
+        style Config fill:#e1f5fe,stroke:#0288d1
+    end
+    
+    subgraph L1["L1: Essentials"]
+        Users[h8_users]
+        Orgs[h8_orgs]
+    end
+    
+    subgraph L2["L2: Plugins"]
+        Blog[h8_blog]
+        Shop[h8_shop]
+    end
+    
+    L2 --> L1 --> L0
+```
+
+| 層級 | 說明 |
+|:---:|:-----|
+| **L0** | Configuration 模組位於此層，管理所有設定的讀取與優先級 |
+| **L1** | Essentials Plugin 可透過 `H8.config` 讀取與註冊設定 |
+| **L2** | 業務 Plugin 可註冊專屬設定項，由管理員在 Admin UI 調整 |
+
+---
+
 ## 設定分層與優先級
 
 設定值讀取時，依以下順序由高至低優先級覆蓋：
